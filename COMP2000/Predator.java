@@ -37,15 +37,20 @@ public abstract class Predator extends Animal {
         return false;
     }
 
+    /** Closest visible prey that is outside the refuge, or null. */
+    protected Prey nearestPrey(World world) {
+        List<Prey> visible =
+            world.getGrid().occupantsWithin(getX(), getY(), visionRadius, Prey.class);
+        visible.removeIf(p -> world.isInSafeZone(p.getX(), p.getY()));
+        return findNearest(visible);
+    }
+
     /** Hunt when hungry, otherwise look for a mate, otherwise wander. */
     @Override
     protected void act(World world) {
         tryBreed(world);
 
-        List<Prey> visible =
-            world.getGrid().occupantsWithin(getX(), getY(), visionRadius, Prey.class);
-        visible.removeIf(p -> world.isInSafeZone(p.getX(), p.getY()));
-        Prey target = findNearest(visible);
+        Prey target = nearestPrey(world);
         if (target != null && !isWellFed()) {
             moveToward(target);
             tryEat(target, world);

@@ -76,13 +76,24 @@ public abstract class Prey extends Animal implements Edible {
         return false;
     }
 
+    /** Closest visible predator, or null. */
+    protected Predator nearestThreat(World world) {
+        return findNearest(
+            world.getGrid().occupantsWithin(getX(), getY(), visionRadius, Predator.class));
+    }
+
+    /** Closest visible food, or null. */
+    protected Food nearestFood(World world) {
+        return findNearest(
+            world.getGrid().occupantsWithin(getX(), getY(), visionRadius, Food.class));
+    }
+
     /** Flee, then breed, then forage, then look for a mate, then wander. */
     @Override
     protected void act(World world) {
         updateSpeed();
 
-        Predator threat = findNearest(
-            world.getGrid().occupantsWithin(getX(), getY(), visionRadius, Predator.class));
+        Predator threat = nearestThreat(world);
         if (threat != null) {
             if (world.isInSafeZone(getX(), getY())) {
                 wander(world);
@@ -96,8 +107,7 @@ public abstract class Prey extends Animal implements Edible {
 
         tryBreed(world);
 
-        Food food = findNearest(
-            world.getGrid().occupantsWithin(getX(), getY(), visionRadius, Food.class));
+        Food food = nearestFood(world);
         if (food != null && !isWellFed()) {
             moveToward(food);
             tryEatFood(food);
