@@ -49,6 +49,7 @@ public abstract class Predator extends Animal {
         return findNearest(visible);
     }
 
+    @Override
     public Mood<Predator> getMood() { return mood; }
 
     /** Hunting or Digesting decides what this tick looks like. */

@@ -93,6 +93,7 @@ public abstract class Prey extends Animal implements Edible {
             world.getGrid().occupantsWithin(getX(), getY(), visionRadius, Food.class));
     }
 
+    @Override
     public Mood<Prey> getMood() { return mood; }
 
     /** Which of the abilities above to use this tick is the current mood's decision. */
