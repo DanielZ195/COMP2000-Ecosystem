@@ -3,6 +3,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Keeps the run's statistics: population per species per tick, plus totals
@@ -16,6 +17,14 @@ public class PopulationRecorder implements WorldListener {
     private final Map<String, List<Integer>> history = new LinkedHashMap<>();
     private int births, starved, eaten, hops;
     private MoodCensus census;
+
+    /**
+     * Below this many animals the census runs sequentially. CensusBenchmark
+     * found parallel 12x slower at 100 animals, still slower at 10,000, and
+     * 5.6x faster at 100,000. The collector is thread safe either way, so
+     * this only chooses the faster path; it does not change the result.
+     */
+    static final int PARALLEL_THRESHOLD = 50_000;
 
     public PopulationRecorder(World world) {
         for (String species : world.speciesColours().keySet()) {
@@ -35,7 +44,11 @@ public class PopulationRecorder implements WorldListener {
         history.forEach((species, series) ->
             series.add(counts.getOrDefault(species, 0L).intValue()));
 
-        census = world.allAnimals().parallelStream().collect(MoodCensus.collector());
+        List<Animal> animals = world.allAnimals();
+        Stream<Animal> source = animals.size() >= PARALLEL_THRESHOLD
+            ? animals.parallelStream()
+            : animals.stream();
+        census = source.collect(MoodCensus.collector());
     }
 
     /** Moods at the end of the latest tick, or null before the first tick. */
