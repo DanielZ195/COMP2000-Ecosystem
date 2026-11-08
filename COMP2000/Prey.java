@@ -60,7 +60,7 @@ public abstract class Prey extends Animal implements Edible {
             setPosition(getX() + sideways, getY() + 2 * away);
         }
         health -= HOP_COST;
-        world.recordHop();
+        world.recordEvade(this);
     }
 
     /** How far out this animal will still break for the refuge. */

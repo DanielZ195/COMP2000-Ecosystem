@@ -9,14 +9,16 @@ public class Series {
         for (int i=0;i<25;i++) w.addRabbit(new Rabbit(r.nextInt(40), r.nextInt(30)));
         for (int i=0;i<30;i++) w.addMouse(new Mouse(r.nextInt(40), r.nextInt(30)));
         for (int i=0;i<40;i++) w.addFood(new Food(r.nextInt(40), r.nextInt(30)));
+        PopulationRecorder s = new PopulationRecorder(w);
+        w.addListener(s);
         for (int t=0;t<ticks && w.getState()==SimulationState.RUNNING;t++) {
             if (t % 80 == 0)
                 System.out.printf("t=%-4d H=%-2d F=%-2d R=%-3d M=%-3d Food=%-3d | births=%-4d starved=%-4d eaten=%-4d hops=%d%n",
                     t, w.getHawks().size(), w.getFoxes().size(), w.getRabbits().size(),
-                    w.getMice().size(), w.getFood().size(), w.getBirths(), w.getStarved(), w.getEaten(), w.getHops());
+                    w.getMice().size(), w.getFood().size(), s.getBirths(), s.getStarved(), s.getEaten(), s.getHops());
             w.update();
         }
         System.out.printf("END t=%d %s | births=%d starved=%d eaten=%d hops=%d%n",
-            w.getTickCount(), w.getState(), w.getBirths(), w.getStarved(), w.getEaten(), w.getHops());
+            w.getTickCount(), w.getState(), s.getBirths(), s.getStarved(), s.getEaten(), s.getHops());
     }
 }

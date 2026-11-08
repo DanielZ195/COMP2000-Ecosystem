@@ -38,7 +38,9 @@ public class Main {
 
         SimPanel panel = new SimPanel(world);
         panel.setPreferredSize(new Dimension(cols * SimPanel.CELL_SIZE, rows * SimPanel.CELL_SIZE));
-        GraphPanel graph = new GraphPanel(world);
+        PopulationRecorder recorder = new PopulationRecorder(world);
+        world.addListener(recorder);
+        GraphPanel graph = new GraphPanel(world, recorder);
 
         JFrame frame = new JFrame("Predator and Prey Simulation - COMP2000");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -48,15 +50,19 @@ public class Main {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        Timer timer = new Timer(config.getTickMs(), e -> {
-            world.update();
+        // The timer only drives the clock. Everything that reacts to a tick
+        // subscribes to the world, so Main no longer has to know who that is.
+        Timer timer = new Timer(config.getTickMs(), e -> world.update());
+
+        world.addListener(WorldListener.onTick(w -> {
             panel.repaint();
             graph.repaint();
-            if (world.getState() != SimulationState.RUNNING) {
-                ((Timer) e.getSource()).stop();
-                System.out.println("Ended at tick " + world.getTickCount() + ": " + world.getState()
-                    + "  births=" + world.getBirths() + " starved=" + world.getStarved()
-                    + " eaten=" + world.getEaten() + " hops=" + world.getHops());
+        }));
+        world.addListener(new ConsoleReporter(recorder));
+        world.addListener(new WorldListener() {
+            @Override
+            public void onEnded(World w, SimulationState state) {
+                timer.stop();
             }
         });
         timer.start();
