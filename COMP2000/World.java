@@ -82,7 +82,11 @@ public class World {
     public int getBirths() { return births; }
     public int getHops() { return hops; }
 
-    void recordHop() { hops++; }
+    /** Called by Prey.evade(): counts the hop and tells the listeners. */
+    void recordEvade(Prey prey) {
+        hops++;
+        for (WorldListener l : listeners) l.onEvade(prey);
+    }
 
     /** Each species reports its own colour, so the graph always matches the dots. */
     public Map<String, Color> speciesColours() {
@@ -143,6 +147,7 @@ public class World {
         Animal child = parent.newOffspring(x, y);
         register(child);
         births++;
+        for (WorldListener l : listeners) l.onBirth(child);
         return child;
     }
 
@@ -252,6 +257,7 @@ public class World {
             if (e.isAlive() || !(e instanceof Animal)) continue;
             if (e.getDeathCause() == DeathCause.STARVED) starved++;
             else if (e.getDeathCause() == DeathCause.EATEN) eaten++;
+            for (WorldListener l : listeners) l.onDeath((Animal) e, e.getDeathCause());
         }
         hawks.removeIf(h -> !h.isAlive());
         foxes.removeIf(f -> !f.isAlive());
