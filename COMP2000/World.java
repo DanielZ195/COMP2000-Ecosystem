@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * World owns every entity and drives the simulation. It stores each kind
@@ -81,13 +83,9 @@ public class World {
 
     /** Each species reports its own colour, so the graph always matches the dots. */
     public Map<String, Color> speciesColours() {
-        Map<String, Color> m = new LinkedHashMap<>();
-        m.put("Hawks", new Hawk(0, 0).getColor());
-        m.put("Foxes", new Fox(0, 0).getColor());
-        m.put("Rabbits", new Rabbit(0, 0).getColor());
-        m.put("Mice", new Mouse(0, 0).getColor());
-        m.put("Food", new Food(0, 0).getColor());
-        return m;
+        return Stream.of(new Hawk(0, 0), new Fox(0, 0), new Rabbit(0, 0), new Mouse(0, 0), new Food(0, 0))
+            .collect(Collectors.toMap(Entity::getSpeciesName, Entity::getColor,
+                                      (a, b) -> a, LinkedHashMap::new));
     }
 
     public Random getRandom() { return rng; }
@@ -148,6 +146,16 @@ public class World {
         all.addAll(rabbits);
         all.addAll(mice);
         all.addAll(food);
+        return all;
+    }
+
+    /** Every living animal, without food. */
+    public List<Animal> allAnimals() {
+        List<Animal> all = new ArrayList<>();
+        all.addAll(hawks);
+        all.addAll(foxes);
+        all.addAll(rabbits);
+        all.addAll(mice);
         return all;
     }
 

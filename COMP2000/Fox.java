@@ -18,6 +18,9 @@ public class Fox extends Predator {
 
 
     @Override
+    public String getSpeciesName() { return "Foxes"; }
+
+    @Override
     public String getLabel() { return "F"; }
 
     @Override

@@ -1,6 +1,6 @@
 import java.awt.Color;
 import java.awt.Graphics;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -95,17 +95,10 @@ public abstract class Animal extends Entity {
      */
     protected Animal nearestMate(World world) {
         int range = visionRadius * 3;
-        List<Animal> mates = new ArrayList<>();
-        for (Animal a : world.getGrid().occupantsWithin(getX(), getY(), range, Animal.class)) {
-            if (a != this && a.getClass() == getClass() && a.canBreed()) mates.add(a);
-        }
-        Animal nearest = null;
-        int best = Integer.MAX_VALUE;
-        for (Animal m : mates) {
-            int d = distanceTo(m);
-            if (d < best) { best = d; nearest = m; }
-        }
-        return nearest;
+        return world.getGrid().occupantsWithin(getX(), getY(), range, Animal.class).stream()
+            .filter(a -> a != this && a.getClass() == getClass() && a.canBreed())
+            .min(Comparator.comparingInt(this::distanceTo))
+            .orElse(null);
     }
 
     // --- movement -----------------------------------------------------
@@ -152,17 +145,13 @@ public abstract class Animal extends Entity {
 
     /** Generic search: finds the closest living candidate within vision range. */
     protected <T extends Entity> T findNearest(List<T> candidates) {
-        T nearest = null;
-        int bestDist = Integer.MAX_VALUE;
-        for (T candidate : candidates) {
-            if (!candidate.isAlive()) continue;
-            int d = this.distanceTo(candidate);
-            if (d < bestDist) {
-                bestDist = d;
-                nearest = candidate;
-            }
-        }
-        return (bestDist <= visionRadius) ? nearest : null;
+        // min() keeps the first of equally close candidates, the same tie-break
+        // the old loop had, so seeded runs replay exactly as before.
+        return candidates.stream()
+            .filter(Entity::isAlive)
+            .min(Comparator.comparingInt(this::distanceTo))
+            .filter(nearest -> distanceTo(nearest) <= visionRadius)
+            .orElse(null);
     }
 
     @Override

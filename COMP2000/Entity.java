@@ -52,6 +52,9 @@ public abstract class Entity {
     /** The letter shown on the grid: H hawk, F fox, R rabbit, m mouse, * food. */
     public abstract String getLabel();
 
+    /** Plural group name used for counts and the graph legend: "Hawks", "Mice", "Food". */
+    public abstract String getSpeciesName();
+
     private static final Font LABEL_FONT = new Font(Font.MONOSPACED, Font.BOLD, 15);
 
     /** Every entity draws the same way; only the letter and colour differ. */
