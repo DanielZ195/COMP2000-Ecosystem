@@ -35,8 +35,6 @@ public class World {
     // order is predictable: the recorder registers before the panels that read it.
     private final List<WorldListener> listeners = new ArrayList<>();
 
-    private final Map<String, List<Integer>> history = new LinkedHashMap<>();
-    private int starved = 0, eaten = 0, births = 0, hops = 0;
 
     // A rectangular refuge that Predators are physically barred from entering.
     // Rabbit and Mouse are ordinary Prey, so nothing stops them going in.
@@ -62,7 +60,6 @@ public class World {
         // produces near-identical first draws, so seeds 1 and 2 would open alike.
         this.rng = new Random(seed * 6364136223846793005L + 1442695040888963407L);
         this.grid = new Grid<>(width, height);
-        for (String species : speciesColours().keySet()) history.put(species, new ArrayList<>());
         this.safeZoneEnabled = config.hasSafeZone();
         this.zoneWidth = (int) (width * 0.28);
         this.zoneHeight = (int) (height * 0.38);
@@ -76,15 +73,9 @@ public class World {
     public int getTickCount() { return tickCount; }
     public void setMaxTicks(int t) { this.maxTicks = t; }
 
-    public Map<String, List<Integer>> getHistory() { return history; }
-    public int getStarved() { return starved; }
-    public int getEaten() { return eaten; }
-    public int getBirths() { return births; }
-    public int getHops() { return hops; }
 
-    /** Called by Prey.evade(): counts the hop and tells the listeners. */
+    /** Called by Prey.evade() so listeners hear about the hop. */
     void recordEvade(Prey prey) {
-        hops++;
         for (WorldListener l : listeners) l.onEvade(prey);
     }
 
@@ -99,13 +90,6 @@ public class World {
         return m;
     }
 
-    private void recordHistory() {
-        history.get("Hawks").add(hawks.size());
-        history.get("Foxes").add(foxes.size());
-        history.get("Rabbits").add(rabbits.size());
-        history.get("Mice").add(mice.size());
-        history.get("Food").add(food.size());
-    }
     public Random getRandom() { return rng; }
     public long getSeed() { return seed; }
 
@@ -146,7 +130,6 @@ public class World {
         }
         Animal child = parent.newOffspring(x, y);
         register(child);
-        births++;
         for (WorldListener l : listeners) l.onBirth(child);
         return child;
     }
@@ -191,7 +174,6 @@ public class World {
             food.add(new Food(rng.nextInt(width), rng.nextInt(height)));
         }
 
-        recordHistory();
         state = evaluateState();
 
         for (WorldListener l : listeners) l.onTick(this);
@@ -255,8 +237,6 @@ public class World {
     private void removeDead() {
         for (Entity e : allEntities()) {
             if (e.isAlive() || !(e instanceof Animal)) continue;
-            if (e.getDeathCause() == DeathCause.STARVED) starved++;
-            else if (e.getDeathCause() == DeathCause.EATEN) eaten++;
             for (WorldListener l : listeners) l.onDeath((Animal) e, e.getDeathCause());
         }
         hawks.removeIf(h -> !h.isAlive());

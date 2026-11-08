@@ -8,6 +8,8 @@ public class Ablation {
         for (int i=0;i<c.getRabbits();i++) w.addRabbit(new Rabbit(r.nextInt(c.getCols()), r.nextInt(c.getRows())));
         for (int i=0;i<c.getMice();i++)    w.addMouse(new Mouse(r.nextInt(c.getCols()), r.nextInt(c.getRows())));
         for (int i=0;i<c.getFood();i++)    w.addFood(new Food(r.nextInt(c.getCols()), r.nextInt(c.getRows())));
+        PopulationRecorder stats = new PopulationRecorder(w);
+        w.addListener(stats);
         int peak=0, troughAfterPeak=Integer.MAX_VALUE, rebounds=0, prev=c.getRabbits(); boolean falling=false;
         while (w.getState()==SimulationState.RUNNING && w.getTickCount()<3000) {
             w.update();
@@ -18,7 +20,7 @@ public class Ablation {
             prev = R;
         }
         System.out.printf("%-26s survived %4d ticks  peakPrey=%-3d rebounds=%d  births=%d%n",
-            label, w.getTickCount(), peak, rebounds, w.getBirths());
+            label, w.getTickCount(), peak, rebounds, stats.getBirths());
     }
     public static void main(String[] a) throws Exception {
         for (String seed : new String[]{"918273645","555000111","777222333"}) {

@@ -14,12 +14,14 @@ public class Render {
         for (int i=0;i<c.getRabbits();i++) w.addRabbit(new Rabbit(r.nextInt(c.getCols()), r.nextInt(c.getRows())));
         for (int i=0;i<c.getMice();i++)    w.addMouse(new Mouse(r.nextInt(c.getCols()), r.nextInt(c.getRows())));
         for (int i=0;i<c.getFood();i++)    w.addFood(new Food(r.nextInt(c.getCols()), r.nextInt(c.getRows())));
+        PopulationRecorder stats = new PopulationRecorder(w);
+        w.addListener(stats);
         int ticks = Integer.parseInt(a[1]);
         for (int t=0; t<ticks && w.getState()==SimulationState.RUNNING; t++) w.update();
 
         int gw = c.getCols()*SimPanel.CELL_SIZE, gh = c.getRows()*SimPanel.CELL_SIZE, graphH = 120;
         SimPanel sp = new SimPanel(w);   sp.setSize(gw, gh);
-        GraphPanel gp = new GraphPanel(w); gp.setSize(gw, graphH);
+        GraphPanel gp = new GraphPanel(w, stats); gp.setSize(gw, graphH);
 
         BufferedImage img = new BufferedImage(gw, gh + graphH, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = img.createGraphics();

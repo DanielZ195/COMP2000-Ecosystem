@@ -38,7 +38,9 @@ public class Main {
 
         SimPanel panel = new SimPanel(world);
         panel.setPreferredSize(new Dimension(cols * SimPanel.CELL_SIZE, rows * SimPanel.CELL_SIZE));
-        GraphPanel graph = new GraphPanel(world);
+        PopulationRecorder recorder = new PopulationRecorder(world);
+        world.addListener(recorder);
+        GraphPanel graph = new GraphPanel(world, recorder);
 
         JFrame frame = new JFrame("Predator and Prey Simulation - COMP2000");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -55,8 +57,7 @@ public class Main {
             if (world.getState() != SimulationState.RUNNING) {
                 ((Timer) e.getSource()).stop();
                 System.out.println("Ended at tick " + world.getTickCount() + ": " + world.getState()
-                    + "  births=" + world.getBirths() + " starved=" + world.getStarved()
-                    + " eaten=" + world.getEaten() + " hops=" + world.getHops());
+                    + "  " + recorder.totals());
             }
         });
         timer.start();

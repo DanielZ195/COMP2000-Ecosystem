@@ -15,10 +15,12 @@ public class GraphPanel extends JPanel {
     private static final int HEIGHT = 120;
 
     private final World world;
+    private final PopulationRecorder recorder;
     private final Map<String, Color> colours;
 
-    public GraphPanel(World world) {
+    public GraphPanel(World world, PopulationRecorder recorder) {
         this.world = world;
+        this.recorder = recorder;
         this.colours = world.speciesColours();
         setBackground(new Color(20, 20, 20));
         setPreferredSize(new Dimension(100, HEIGHT));
@@ -28,7 +30,7 @@ public class GraphPanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         int w = getWidth(), h = getHeight();
-        Map<String, List<Integer>> history = world.getHistory();
+        Map<String, List<Integer>> history = recorder.getHistory();
 
         // Scaled to the animal counts only. Food runs an order of magnitude
         // higher, and including it flattens every species line to the floor.
@@ -78,11 +80,6 @@ public class GraphPanel extends JPanel {
     private String summary() {
         String ending = world.getState() == SimulationState.RUNNING
             ? "" : "   ENDED: " + world.getState();
-        return "tick " + world.getTickCount()
-             + "   births " + world.getBirths()
-             + "   starved " + world.getStarved()
-             + "   eaten " + world.getEaten()
-             + "   hops " + world.getHops()
-             + ending;
+        return "tick " + world.getTickCount() + "   " + recorder.totals() + ending;
     }
 }
