@@ -50,14 +50,19 @@ public class Main {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        Timer timer = new Timer(config.getTickMs(), e -> {
-            world.update();
+        // The timer only drives the clock. Everything that reacts to a tick
+        // subscribes to the world, so Main no longer has to know who that is.
+        Timer timer = new Timer(config.getTickMs(), e -> world.update());
+
+        world.addListener(WorldListener.onTick(w -> {
             panel.repaint();
             graph.repaint();
-            if (world.getState() != SimulationState.RUNNING) {
-                ((Timer) e.getSource()).stop();
-                System.out.println("Ended at tick " + world.getTickCount() + ": " + world.getState()
-                    + "  " + recorder.totals());
+        }));
+        world.addListener(new ConsoleReporter(recorder));
+        world.addListener(new WorldListener() {
+            @Override
+            public void onEnded(World w, SimulationState state) {
+                timer.stop();
             }
         });
         timer.start();
