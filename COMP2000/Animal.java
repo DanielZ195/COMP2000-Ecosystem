@@ -1,3 +1,5 @@
+import java.awt.Color;
+import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -187,6 +189,17 @@ public abstract class Animal extends Entity {
      * name its own subclass: Prey returns a Mood<Prey>, Predator a Mood<Predator>.
      */
     public abstract Mood<?> getMood();
+
+    /** The species letter, plus a small corner dot when the mood has a marker colour. */
+    @Override
+    public void draw(Graphics g) {
+        super.draw(g);
+        Color marker = getMood().marker();
+        if (marker == null) return;
+        int half = SimPanel.CELL_SIZE / 2;
+        g.setColor(marker);
+        g.fillOval(px() + half - 6, py() - half + 1, 5, 5);
+    }
 
     @Override
     public String toString() {
