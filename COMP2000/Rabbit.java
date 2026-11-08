@@ -20,6 +20,9 @@ public class Rabbit extends Prey {
 
 
     @Override
+    public String getSpeciesName() { return "Rabbits"; }
+
+    @Override
     public String getLabel() { return "R"; }
 
     @Override

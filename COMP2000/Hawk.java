@@ -28,6 +28,9 @@ public class Hawk extends Predator {
 
 
     @Override
+    public String getSpeciesName() { return "Hawks"; }
+
+    @Override
     public String getLabel() { return "H"; }
 
     @Override

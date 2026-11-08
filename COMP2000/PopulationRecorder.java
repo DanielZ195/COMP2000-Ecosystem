@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Keeps the run's statistics: population per species per tick, plus totals
@@ -21,13 +22,17 @@ public class PopulationRecorder implements WorldListener {
         }
     }
 
+    /**
+     * One pass over every entity, grouped by species. groupingBy leaves out
+     * a species with no members, so getOrDefault records an extinct
+     * species as 0 instead of skipping its point on the graph.
+     */
     @Override
     public void onTick(World world) {
-        history.get("Hawks").add(world.getHawks().size());
-        history.get("Foxes").add(world.getFoxes().size());
-        history.get("Rabbits").add(world.getRabbits().size());
-        history.get("Mice").add(world.getMice().size());
-        history.get("Food").add(world.getFood().size());
+        Map<String, Long> counts = world.allEntities().stream()
+            .collect(Collectors.groupingBy(Entity::getSpeciesName, Collectors.counting()));
+        history.forEach((species, series) ->
+            series.add(counts.getOrDefault(species, 0L).intValue()));
     }
 
     @Override

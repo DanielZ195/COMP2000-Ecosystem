@@ -25,6 +25,9 @@ public class Mouse extends Prey {
 
 
     @Override
+    public String getSpeciesName() { return "Mice"; }
+
+    @Override
     public String getLabel() { return "m"; }
 
     @Override

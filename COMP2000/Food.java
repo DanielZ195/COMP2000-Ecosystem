@@ -20,6 +20,9 @@ public class Food extends Entity implements Edible {
 
 
     @Override
+    public String getSpeciesName() { return "Food"; }
+
+    @Override
     public String getLabel() { return "*"; }
 
     @Override
