@@ -6,9 +6,13 @@ import java.util.List;
  *
  * tryEat() takes a Prey (not just any Animal) because only Prey is Edible -
  * the health gained comes from the prey's own getNutritionValue().
+ *
+ * Behaviour per tick comes from the current Mood: Hunting, or Digesting
+ * for a few ticks after a kill.
  */
 public abstract class Predator extends Animal {
     protected int eatDistance = 0;
+    private Mood<Predator> mood = Hunting.INSTANCE;
 
     public Predator(int x, int y, double startHealth, int speed, int visionRadius) {
         super(x, y, startHealth, speed, visionRadius);
@@ -37,34 +41,20 @@ public abstract class Predator extends Animal {
         return false;
     }
 
-    /** Hunt when hungry, otherwise look for a mate, otherwise wander. */
-    @Override
-    protected void act(World world) {
-        tryBreed(world);
-
+    /** Closest visible prey that is outside the refuge, or null. */
+    protected Prey nearestPrey(World world) {
         List<Prey> visible =
             world.getGrid().occupantsWithin(getX(), getY(), visionRadius, Prey.class);
         visible.removeIf(p -> world.isInSafeZone(p.getX(), p.getY()));
-        Prey target = findNearest(visible);
-        if (target != null && !isWellFed()) {
-            moveToward(target);
-            tryEat(target, world);
-            return;
-        }
+        return findNearest(visible);
+    }
 
-        if (canBreed()) {
-            Animal mate = nearestMate(world);
-            if (mate != null) {
-                moveToward(mate);
-                return;
-            }
-        }
+    @Override
+    public Mood<Predator> getMood() { return mood; }
 
-        if (target != null) {
-            moveToward(target);
-            tryEat(target, world);
-        } else {
-            wander(world);
-        }
+    /** Hunting or Digesting decides what this tick looks like. */
+    @Override
+    protected void act(World world) {
+        mood = mood.act(this, world);
     }
 }

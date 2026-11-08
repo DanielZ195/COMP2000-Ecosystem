@@ -1,3 +1,5 @@
+import java.awt.Color;
+import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -170,7 +172,8 @@ public abstract class Animal extends Entity {
         if (!isAlive()) {
             throw new IllegalStateException("update() called on a dead " + getClass().getSimpleName());
         }
-        health -= METABOLISM;
+        // The mood sets the price of this tick: panic burns energy, rest saves it.
+        health -= METABOLISM * getMood().metabolismRate();
         if (health <= 0) {
             kill(DeathCause.STARVED);
             return;
@@ -180,6 +183,23 @@ public abstract class Animal extends Entity {
 
     /** Each concrete animal decides what "acting" means for it. */
     protected abstract void act(World world);
+
+    /**
+     * The behaviour mode this animal is in. Wildcard because Animal cannot
+     * name its own subclass: Prey returns a Mood<Prey>, Predator a Mood<Predator>.
+     */
+    public abstract Mood<?> getMood();
+
+    /** The species letter, plus a small corner dot when the mood has a marker colour. */
+    @Override
+    public void draw(Graphics g) {
+        super.draw(g);
+        Color marker = getMood().marker();
+        if (marker == null) return;
+        int half = SimPanel.CELL_SIZE / 2;
+        g.setColor(marker);
+        g.fillOval(px() + half - 6, py() - half + 1, 5, 5);
+    }
 
     @Override
     public String toString() {
