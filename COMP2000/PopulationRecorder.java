@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public class PopulationRecorder implements WorldListener {
     private final Map<String, List<Integer>> history = new LinkedHashMap<>();
     private int births, starved, eaten, hops;
+    private MoodCensus census;
 
     public PopulationRecorder(World world) {
         for (String species : world.speciesColours().keySet()) {
@@ -33,7 +34,12 @@ public class PopulationRecorder implements WorldListener {
             .collect(Collectors.groupingBy(Entity::getSpeciesName, Collectors.counting()));
         history.forEach((species, series) ->
             series.add(counts.getOrDefault(species, 0L).intValue()));
+
+        census = world.allAnimals().parallelStream().collect(MoodCensus.collector());
     }
+
+    /** Moods at the end of the latest tick, or null before the first tick. */
+    public MoodCensus getCensus() { return census; }
 
     @Override
     public void onBirth(Animal child) { births++; }

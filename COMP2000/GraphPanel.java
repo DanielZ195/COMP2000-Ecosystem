@@ -12,7 +12,7 @@ import java.util.Map;
  */
 public class GraphPanel extends JPanel {
     private static final int WINDOW = 400;
-    private static final int HEIGHT = 120;
+    private static final int HEIGHT = 140;
 
     private final World world;
     private final PopulationRecorder recorder;
@@ -69,11 +69,15 @@ public class GraphPanel extends JPanel {
 
         g.setColor(Color.LIGHT_GRAY);
         g.drawString(summary(), 4, h - 4);
+        if (recorder.getCensus() != null) {
+            g.setColor(Color.GRAY);
+            g.drawString(recorder.getCensus().toString(), 4, h - 18);
+        }
     }
 
     /** Clamped to the panel, so the food line pins to the top instead of flying off it. */
     private int plot(int value, int peak, int h) {
-        int y = h - 16 - value * (h - 30) / peak;
+        int y = h - 32 - value * (h - 46) / peak; // bottom 32px hold the two text lines
         return Math.max(14, y);
     }
 

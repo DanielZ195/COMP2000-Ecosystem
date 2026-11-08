@@ -149,6 +149,16 @@ public class World {
         return all;
     }
 
+    /** Every living animal, without food. */
+    public List<Animal> allAnimals() {
+        List<Animal> all = new ArrayList<>();
+        all.addAll(hawks);
+        all.addAll(foxes);
+        all.addAll(rabbits);
+        all.addAll(mice);
+        return all;
+    }
+
     public void update() {
         if (state != SimulationState.RUNNING) return;
         tickCount++;

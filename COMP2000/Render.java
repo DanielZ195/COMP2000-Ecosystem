@@ -19,7 +19,7 @@ public class Render {
         int ticks = Integer.parseInt(a[1]);
         for (int t=0; t<ticks && w.getState()==SimulationState.RUNNING; t++) w.update();
 
-        int gw = c.getCols()*SimPanel.CELL_SIZE, gh = c.getRows()*SimPanel.CELL_SIZE, graphH = 120;
+        int gw = c.getCols()*SimPanel.CELL_SIZE, gh = c.getRows()*SimPanel.CELL_SIZE, graphH = 140;
         SimPanel sp = new SimPanel(w);   sp.setSize(gw, gh);
         GraphPanel gp = new GraphPanel(w, stats); gp.setSize(gw, graphH);
 
