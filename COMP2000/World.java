@@ -31,6 +31,10 @@ public class World {
     private int maxTicks = 0; // 0 = no limit
     private SimulationState state = SimulationState.RUNNING;
 
+    // Notified in registration order. Kept as a List, not a Set, so the
+    // order is predictable: the recorder registers before the panels that read it.
+    private final List<WorldListener> listeners = new ArrayList<>();
+
     private final Map<String, List<Integer>> history = new LinkedHashMap<>();
     private int starved = 0, eaten = 0, births = 0, hops = 0;
 
@@ -184,7 +188,19 @@ public class World {
 
         recordHistory();
         state = evaluateState();
+
+        for (WorldListener l : listeners) l.onTick(this);
+        if (state != SimulationState.RUNNING) {
+            for (WorldListener l : listeners) l.onEnded(this, state);
+        }
     }
+
+    // --- observers ----------------------------------------------------
+
+    /** Subscribe to tick, birth, death and end-of-run events. */
+    public void addListener(WorldListener listener) { listeners.add(listener); }
+
+    public void removeListener(WorldListener listener) { listeners.remove(listener); }
 
     /** Extinction is an expected outcome, so it is returned, never thrown. */
     private SimulationState evaluateState() {
