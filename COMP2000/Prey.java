@@ -5,6 +5,10 @@ import java.util.Random;
  * Edible - since Predator eats Prey. Rabbit and Mouse extend this so they
  * share fleeing, foraging and evasion.
  *
+ * Prey supplies the abilities (evade, tryEatFood, nearestThreat...). Which
+ * of them to use each tick is decided by its current Mood: Grazing,
+ * Fleeing or Resting.
+ *
  * Speed follows health directly: an animal above half its maximum moves at
  * FED_SPEED, below it at HUNGRY_SPEED. One number drives speed, evasion and
  * breeding, so a starving animal is slow, cannot dodge, and cannot reproduce.
@@ -17,6 +21,7 @@ public abstract class Prey extends Animal implements Edible {
 
     protected int eatDistance = 1;
     protected double nutritionValue; // how much health a Predator gains from eating this
+    private Mood<Prey> mood = Grazing.INSTANCE;
 
     public Prey(int x, int y, double startHealth, int visionRadius, double nutritionValue) {
         super(x, y, startHealth, FED_SPEED, visionRadius);
@@ -88,45 +93,12 @@ public abstract class Prey extends Animal implements Edible {
             world.getGrid().occupantsWithin(getX(), getY(), visionRadius, Food.class));
     }
 
-    /** Flee, then breed, then forage, then look for a mate, then wander. */
+    public Mood<Prey> getMood() { return mood; }
+
+    /** Which of the abilities above to use this tick is the current mood's decision. */
     @Override
     protected void act(World world) {
         updateSpeed();
-
-        Predator threat = nearestThreat(world);
-        if (threat != null) {
-            if (world.isInSafeZone(getX(), getY())) {
-                wander(world);
-            } else if (distanceToRefuge(world) <= refugeRange()) {
-                moveToward(world.getZoneCentreX(), world.getZoneCentreY());
-            } else {
-                evade(threat, world);
-            }
-            return;
-        }
-
-        tryBreed(world);
-
-        Food food = nearestFood(world);
-        if (food != null && !isWellFed()) {
-            moveToward(food);
-            tryEatFood(food);
-            return;
-        }
-
-        if (canBreed()) {
-            Animal mate = nearestMate(world);
-            if (mate != null) {
-                moveToward(mate);
-                return;
-            }
-        }
-
-        if (food != null) {
-            moveToward(food);
-            tryEatFood(food);
-        } else {
-            wander(world);
-        }
+        mood = mood.act(this, world);
     }
 }
