@@ -352,9 +352,14 @@ more than labels, because each mood changes how fast the animal burns energy:
 The moods are visible: a yellow dot on fleeing animals, cyan on resting ones and magenta on
 digesting ones, plus the live census line under the graph.
 
-> **[YOUR INPUT: what inspired it]** One or two sentences in your own words. (If it helps:
-> the idea that fear itself has a cost is known in ecology as the "landscape of fear", but
-> only mention it if that is genuinely where the idea came from for you.)
+Two things led to it. The first was my own Week 7 result. In that version the prey died out
+in 19 of 20 runs, and part of the reason was that animals had no memory between ticks. A
+rabbit that lost sight of a fox went straight back to eating, and a fox that had just eaten
+went straight back to hunting. Every tick was decided from scratch. The second was the Week 8
+material on the State pattern. The vending machine and traffic light exercises were about an
+object that behaves differently depending on what state it is in, and that was exactly what
+the animals were missing. Once each mood was an object, giving it a cost and a memory came
+naturally.
 
 Alongside the feature I wrote `Experiment` (1.3 and 2.3) to measure what the moods did,
 instead of judging by watching a few runs.
@@ -391,8 +396,7 @@ pause" means the digest pause cut from 4 ticks to 1.
 | **Moods, panic cost on, 4-tick pause (submitted)** | **892** | **13** | **6** | **1** |
 
 Cutting the digest pause to one tick (row 3 against row 5) doubled *predator* extinctions,
-from 6 to 12.
-The pause was meant to protect prey, but its bigger effect was protecting predators. Half
+from 6 to 12. The pause was meant to protect prey, but its bigger effect was protecting predators. Half
 the energy burn after a meal is what carries them through the lean stretch after they have
 thinned the prey out. Nothing in `Digesting` mentions population or survival. That came out
 of the interaction.
@@ -411,17 +415,23 @@ than grazing ones (for example hp 24 against hp 56 on seed 918273645 at tick 300
 
 **3.3.** If you had another 6 weeks, what would you add or change?
 
-> **[YOUR INPUT]** This should be your call. Options that came up while building, if any
-> appeal:
->
-> 1. **Prey that read predator moods.** Right now a rabbit flees a digesting fox exactly
->    as it flees a hunting one, so it pays the panic cost for nothing. Letting prey ignore
->    digesting predators would test whether the fear cost or the real danger drives the
->    starvation numbers in 3.2.
-> 2. **The two-phase parallel tick** described at the end of 2.3, measured on a large
->    board.
-> 3. **Splitting `Hunting`** into separate hunting and courting moods, so predators
->    looking for a mate are visible on the board and in the census.
+Two things, both following directly from what I found.
+
+1. **Prey that can read a predator's mood.** At the moment a rabbit flees a digesting fox
+   exactly as it flees a hunting one, so it pays the 1.5x panic cost for nothing. I would
+   let prey see a predator's mood and ignore one that is digesting. That turns the
+   unanswered question from 3.2 into an experiment: if starvation drops a lot, the fear
+   cost was doing most of the killing; if it barely moves, the real danger was. The State
+   pattern makes this a small change, because `Prey.nearestThreat()` only needs to skip
+   predators whose `getMood()` is a `Digesting`.
+2. **A two-phase parallel tick.** As described at the end of 2.3: every animal scans the
+   grid in parallel first (which only reads shared state), then all of them act
+   sequentially, because acting uses the shared `Random` and moves things. I would build it
+   behind a switch and run `Experiment` both ways, to measure two things: the speedup on a
+   large board, and how much it changes outcomes when animals perceive the start of the
+   tick instead of the world as it is mid-tick. I left it out this time because I could not
+   answer the second question in the time I had, and on a 40x30 board there is nothing to
+   gain on the first.
 
 ---
 
@@ -429,40 +439,73 @@ than grazing ones (for example hp 24 against hp 56 on seed 918273645 at tick 300
 
 **4.1.** Attach or link your log book entries for Weeks 7–13.
 
-> Submitted as `COMP2000-Logbook.docx` (also in the repository root).
-> **[TO FILL once the Week 8–13 entries are written]**
+My log book is submitted alongside this worksheet as `COMP2000-Logbook.docx` (also in the
+repository root). It is the same log book as the Week 7 submission, with entries for Weeks 3
+to 7. I did not keep entries for Weeks 8 to 13, so the Week 7 showcase entry is the only one
+in the range this question asks for. The record of what I did in the second half of
+semester is in the repository instead: the five pull requests and their commit messages,
+which describe each change and what it did to the measured results.
 
 **4.2.** Reflect on the semester:
 
 - What was the most important concept you learned?
 
-  > **[YOUR INPUT]**
+  Designing for change. In the first half of semester I thought of design mostly as
+  getting the class hierarchy right, meaning what is an `Animal` and what overrides what.
+  The patterns in the second half changed what I look at. State and Observer are both
+  about where the *next* change will land. Before this submission, adding a mood would have
+  meant another branch in `Prey.act()`, and adding a display or a logger would have meant
+  editing `World` and `Main`'s timer. Now a new mood is one new class implementing `Mood`,
+  and a new display is one `addListener()` call. Nothing that already works needs to be
+  opened up. That is the Open/Closed Principle from the Week 8 reading, and I understand it
+  now because I felt the difference. When I added `ConsoleReporter` and then `Experiment`,
+  neither one required touching `World` at all.
 
 - What design trade-off did you face, and how did you resolve it?
 
-  > **[YOUR INPUT]** (Candidates from this work, if one of them is the one that felt real
-  > to you: State against an enum, where the deciding factor was per-mood data; or the
-  > parallel census, which was safe but twelve times slower at our size and was resolved
-  > by measuring and setting a threshold.)
+  Whether to run the mood census in parallel. I built `MoodCensus` as a custom collector
+  specifically so it could run on a parallel stream safely, and `CensusTest` showed that it
+  was safe: 1,200 ticks with no mismatches, against a shared-map version that lost counts
+  in every run. I expected the obvious next step to be "so make it parallel". But when I
+  measured it, the parallel version was twelve times slower on our board. With about 100
+  animals, splitting the work across threads and merging the tallies costs far more than
+  just counting them.
+
+  So the trade-off was between the version that demonstrates parallelism and the version
+  that is actually faster for the simulation as it runs. I resolved it with the benchmark
+  rather than by picking one. `CensusBenchmark` showed parallel only wins somewhere between
+  10,000 and 100,000 animals, so `PopulationRecorder` uses a sequential stream below 50,000
+  and a parallel one above. Both paths run the same collector, so the result never changes,
+  only the speed. The lesson I took is that being thread safe and being worth
+  parallelising are separate questions, and only the first can be answered by reasoning.
+  The second needs a measurement.
 
 - If you started over, what would you do differently?
 
-  > **[YOUR INPUT]**
+  Commit steadily across the whole semester. Both submissions were built in bursts close to
+  the deadline. The Week 7 feedback said so, and it is still true of this one. The work
+  itself benefited from small steps: every commit in this submission compiles and was
+  checked against a seeded run before the next one started, which is how I could say
+  exactly which change moved which number. But doing that in a single day rather than over a few
+  weeks meant I never had time to sit with a result before building on it. The digest-pause
+  finding in 3.2 is the best example. I found it after the feature was finished, when it
+  should have shaped the design. Starting over, I would treat the weekly project guidance
+  as weekly deadlines for my own fork, so each week's pattern or stream feature landed in
+  the week it was taught.
 
 - What feedback from the Week 7 submission did you act on?
 
-  > **[DRAFT, check it]** Four pieces:
-  >
-  > - *"The link isn't a fork of the team repo."* The Week 7 URL was a separate repository
-  >   with the team's history pushed into it. This submission is a GitHub fork of
-  >   `AnumTaliya/COMP2000Assignment1`, so the link to the team repository is visible.
-  > - *"Commits could be more consistent... rather than concentrated on a few days."* This
-  >   time each change was pushed as soon as it compiled and was checked, one small commit
-  >   at a time, through five stacked pull requests (moods, events, streams, experiment,
-  >   diagram).
-  >   **[YOUR INPUT: be honest here about timing. Most of this work still landed close to
-  >   the deadline, and that's worth acknowledging rather than overclaiming.]**
-  > - *"Some inheritance pairs missing from 2.2."* **[YOUR INPUT: keep or drop. This
-  >   worksheet has no inheritance question, but 1.1 lists every implementation of both
-  >   pattern interfaces in full, which was the same lesson.]**
-  > - *"Some weeks missing"* in the log book. Every week from 8 to 13 now has an entry.
+  Two pieces.
+
+  - *"The link isn't a fork of the team repo."* The Week 7 URL was a separate repository
+    with the team's history pushed into it, not a fork. This submission's repository is a
+    real GitHub fork of `AnumTaliya/COMP2000Assignment1`, so the link back to the team
+    repository is visible on its page.
+  - *"Commits could be more consistent across the semester rather than concentrated on a
+    few days."* I acted on the part I could still change, which was how the commits are
+    made. Each change was pushed as soon as it compiled and had been checked, one small
+    commit at a time (18 commits across five pull requests: moods, events, streams,
+    experiment and diagram). Each commit message says what changed and what it did to the
+    measured results. The part I could not fix by then was timing. All 18 commits landed
+    on a single day near the deadline, which is worse than last time on spread, and is why
+    spreading the work out is my answer to the previous question.
